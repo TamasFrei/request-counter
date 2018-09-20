@@ -1,23 +1,32 @@
-from flask import Flask, redirect, render_template
+from flask import Flask, redirect, render_template, request, url_for
+import os
+import connection
 
 app = Flask(__name__)
 
 
 @app.route('/')
 def main():
-    global counter
-    counter += 1
-    return render_template('index.html', counter=counter)
+    return render_template('index.html')
 
 
-@app.route('/request-counter')
+@app.route('/request-counter', methods=['POST', 'GET', 'DELETE', 'PUT'])
 def request_counter():
-    global counter
-    counter += 1
-    return redirect('/')
+    dir_path = os.path.dirname(os.path.realpath('request_counts.txt'))
+    filename = dir_path + '/request_counts.txt'
+    counter = connection.read_file(filename)
+    if request.method == 'POST':
+        counter['POST'] += 1
+    elif request.method == 'GET':
+        counter['GET'] += 1
+    elif request.method == 'DELETE':
+        counter['DELETE'] += 1
+    elif request.method == 'PUT':
+        counter['PUT'] += 1
+    connection.write_to_file(filename, counter)
+    return redirect(url_for(main))
 
 
-counter = 0
 if __name__ == '__main__':
     app.run(port=5000,
             debug=True)
